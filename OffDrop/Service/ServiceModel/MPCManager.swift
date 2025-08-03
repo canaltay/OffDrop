@@ -10,13 +10,16 @@ import MultipeerConnectivity
 
 // Bu sınıf, cihazlar arası bağlantı kurmak, veri (mesaj) göndermek ve almak için tüm Multipeer Connectivity işini yapar.
 final class MPCManager: NSObject {
+    static var shared = MPCManager()
     
     /// Multipeer servis tipi (max 15 karakter). Aynı servis tipine sahip cihazlar birbirini görür.
     private let serviceType = "mpc-chat-demo"
     
     /// Bu cihazın kimliği. Diğer cihazlara böyle tanıtılır.
-    private let peerID = MCPeerID(displayName: UIDevice.current.name)
-    
+    private var peerID: MCPeerID = {
+        let name = UserDefaults.standard.string(forKey: "username") ?? UIDevice.current.name
+        return MCPeerID(displayName: name)
+    }()
     /// Oturum (session) — Bağlantı kurulduğunda, veri gönderme ve alma buradan olur.
     internal var session: MCSession!
     
@@ -77,6 +80,10 @@ final class MPCManager: NSObject {
         } catch {
             print("Mesaj gönderilemedi: \(error.localizedDescription)")
         }
+    }
+    
+    public func getPeerId() -> MCPeerID {
+        return self.peerID
     }
 }
 

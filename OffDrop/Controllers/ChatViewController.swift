@@ -8,35 +8,46 @@
 import UIKit
 
 class ChatViewController: UIViewController, UITextFieldDelegate {
-    private var  mpcManager: MPCManager!
+    private var viewModel: ChatViewModel!
+    var peerListViewModel: PeerListViewModel!
     @IBOutlet weak var messageTextView: UITextView!
     
     @IBAction func sendButtonTapped(_ sender: UIButton) {
-        super.viewDidLoad()
         guard let text = messageTextField.text, !text.isEmpty else { return }
-
-        mpcManager.send(message: text)
-        appendMessage("\(text)")
+        let username = UserDefaults.standard.string(forKey: "username") ?? "Bilinmeyen"
+        let formattedMessage = "\(username): \(text)"
+        viewModel.send(message: formattedMessage)
+        appendMessage(text)
         messageTextField.text = ""
     }
-    @IBOutlet weak var messageTextField: UITextField!
     
+    @IBOutlet weak var messageTextField: UITextField!
     @IBOutlet weak var scrollView: UIScrollView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        mpcManager = MPCManager()
-        mpcManager.start()
-        
-        messageTextView.isEditable = false
-        mpcManager.onMessageReceived = {[weak self] sender, message in
-            DispatchQueue.main.async {
-                self?.appendMessage("\(sender): \(message)")
-            }
-        }
-        messageTextField.delegate = self
+        setupUI()
+        setupBindings()
         registerForKeyboardNotifications()
-
+        messageTextField.delegate = self
+        
     }
+    
+    
+    private func setupBindings() {
+            viewModel.onMessageReceived = { [weak self] sender, message in
+                DispatchQueue.main.async {
+                    self?.appendMessage("\(message)")
+                }
+            }
+        //viewModel.start()
+        }
+    
+    private func setupUI() {
+        viewModel = ChatViewModel(peerListViewModel: peerListViewModel)
+        messageTextView.isEditable = false
+        messageTextField.delegate = self
+        }
 
     private func appendMessage(_ message: String) {
             messageTextView.text += message + "\n"
